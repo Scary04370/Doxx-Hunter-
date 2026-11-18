@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recherche Rapide - Scary04370</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background: #fafafa; }
+        .search-box { padding: 20px; background: white; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { width: 70%; padding: 10px; font-size: 16px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        .results { margin-top: 20px; }
+        .result { margin-bottom: 10px; padding: 10px; background: #eee; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h2>Outil de Recherche OSINT (Phone Friendly)</h2>
+    
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Entrez un nom, un email ou un terme...">
+        <button onclick="lancerRecherche()">Rechercher</button>
+    </div>
+
+    <div class="results" id="resultsContainer">
+        <!-- Les résultats s'afficheront ici -->
+    </div>
+
+    <script>
+        // La fonction qui "marche" vraiment
+        async function lancerRecherche() {
+            const input = document.getElementById('searchInput').value;
+            const container = document.getElementById('resultsContainer');
+            
+            // On vide les résultats précédents
+            container.innerHTML = '<p>Recherche en cours...</p>';
+
+            if (!input) {
+                container.innerHTML = '<p style="color:red;">Veuillez entrer un terme.</p>';
+                return;
+            }
+
+            // On appelle l'API DuckDuckGo (pas de clé nécessaire !)
+            // On utilise l'interface JSON pour avoir le résultat proprement
+            try {
+                const response = await fetch(`https://api.duckduckgo.com/?q=${input}&format=json&no_redirect=1&no_html=1`);
+                const data = await response.json();
+
+                container.innerHTML = ''; // On efface le message "en cours"
+
+                if (data.Abstract) {
+                    // Si DuckDuckGo a trouvé une réponse directe (comme une définition)
+                    container.innerHTML = `<div class="result"><strong>Résumé :</strong> ${data.Abstract}</div>`;
+                } else if (data.RelatedTopics) {
+                    // Si c'est une liste de liens
+                    container.innerHTML = '<ul style="list-style:none; padding:0;">' + 
+                        data.RelatedTopics.slice(0, 5).map(topic => {
+                            const url = topic.first_url || '#';
+                            const title = topic.text || 'Sans titre';
+                            return `<li><a href="${url}" target="_blank" style="color: #007bff; text-decoration: none;">${title}</a></li>`;
+                        }).join('') + '</ul>';
+                } else {
+                    container.innerHTML = '<p>Aucun résultat trouvé.</p>';
+                }
+            } catch (error) {
+                container.innerHTML = '<p style="color:red;">Erreur de connexion. Vérifie ton internet.</p>';
+                console.error(error);
+            }
+        }
+    </script>
+
+</body>
+</html>
